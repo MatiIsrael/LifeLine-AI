@@ -15,15 +15,28 @@ import {
   getSafetyAnalytics,
   predictHotspots,
 } from "../services/dangerZoneEngine.js";
+import {
+  DEMO_ANALYTICS,
+  DEMO_INCIDENTS,
+  DEMO_RESPONDERS,
+  isFirebaseUnavailable,
+} from "../data/demoDashboardData.js";
+import { firebaseEnabled } from "../config/firebaseAdmin.js";
 
 const router = Router();
 
 router.get("/incidents", async (req, res) => {
+  if (!firebaseEnabled) {
+    return res.json({ incidents: DEMO_INCIDENTS, demoMode: true });
+  }
   try {
     const status = req.query.status || "active";
     const incidents = await listIncidents({ status, limit: 100 });
-    return res.json({ incidents });
+    return res.json({ incidents, demoMode: false });
   } catch (error) {
+    if (isFirebaseUnavailable(error)) {
+      return res.json({ incidents: DEMO_INCIDENTS, demoMode: true });
+    }
     return res.status(400).json({ message: error.message });
   }
 });
@@ -76,11 +89,23 @@ router.post("/incidents/:eventId/optimize-route", async (req, res) => {
 });
 
 router.get("/responders", async (req, res) => {
+  const availableOnly = req.query.available === "true";
+  if (!firebaseEnabled) {
+    const list = availableOnly
+      ? DEMO_RESPONDERS.filter((r) => r.status === "available")
+      : DEMO_RESPONDERS;
+    return res.json({ responders: list, demoMode: true });
+  }
   try {
-    const availableOnly = req.query.available === "true";
     const responders = await listResponders({ availableOnly });
-    return res.json({ responders });
+    return res.json({ responders, demoMode: false });
   } catch (error) {
+    if (isFirebaseUnavailable(error)) {
+      const list = availableOnly
+        ? DEMO_RESPONDERS.filter((r) => r.status === "available")
+        : DEMO_RESPONDERS;
+      return res.json({ responders: list, demoMode: true });
+    }
     return res.status(400).json({ message: error.message });
   }
 });
@@ -95,11 +120,23 @@ router.post("/responders", async (req, res) => {
 });
 
 router.get("/analytics", async (req, res) => {
+  if (!firebaseEnabled) {
+    return res.json({
+      analytics: { ...DEMO_ANALYTICS, connectedClients: getConnectedClients() },
+      demoMode: true,
+    });
+  }
   try {
     const analytics = await getAnalytics();
     analytics.connectedClients = getConnectedClients();
-    return res.json({ analytics });
+    return res.json({ analytics, demoMode: false });
   } catch (error) {
+    if (isFirebaseUnavailable(error)) {
+      return res.json({
+        analytics: { ...DEMO_ANALYTICS, connectedClients: getConnectedClients() },
+        demoMode: true,
+      });
+    }
     return res.status(400).json({ message: error.message });
   }
 });
