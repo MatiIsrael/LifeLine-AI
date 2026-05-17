@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lifeline AI — Pitch Deck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #050508;
+      --gold: #f5c542;
+      --text: #f5f5f7;
+      --muted: #8e8e93;
+      --accent: #3b82f6;
+      --danger: #e53935;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "DM Sans", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      height: 100vh;
+    }
+    .deck {
+      height: 100vh;
+      position: relative;
+    }
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 48px 64px;
+      text-align: center;
+      opacity: 0;
+      transform: translateX(40px);
+      pointer-events: none;
+      transition: opacity 0.45s ease, transform 0.45s ease;
+      background:
+        radial-gradient(ellipse 70% 50% at 50% 20%, rgba(245,197,66,0.12), transparent),
+        var(--bg);
+    }
+    .slide.active {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+    .slide.prev {
+      opacity: 0;
+      transform: translateX(-40px);
+    }
+    .tag {
+      font-size: 0.75rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 16px;
+      font-weight: 700;
+    }
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.15;
+      max-width: 900px;
+    }
+    h1 em { font-style: normal; color: var(--gold); }
+    h2 { font-size: 1.5rem; color: var(--muted); font-weight: 500; margin-top: 20px; max-width: 700px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      max-width: 900px;
+      margin-top: 40px;
+      text-align: left;
+    }
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(245,197,66,0.2);
+      border-radius: 16px;
+      padding: 24px;
+      animation: cardIn 0.6s ease backwards;
+    }
+    .card:nth-child(2) { animation-delay: 0.1s; }
+    .card:nth-child(3) { animation-delay: 0.2s; }
+    .card:nth-child(4) { animation-delay: 0.3s; }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .card strong { display: block; color: var(--gold); margin-bottom: 8px; font-size: 1rem; }
+    .card span { font-size: 0.88rem; color: var(--muted); line-height: 1.5; }
+    .stat-row {
+      display: flex; gap: 48px; margin-top: 40px; flex-wrap: wrap; justify-content: center;
+    }
+    .stat strong {
+      display: block;
+      font-size: 2.5rem;
+      color: var(--gold);
+      font-weight: 800;
+    }
+    .stat span { font-size: 0.85rem; color: var(--muted); }
+    .flow {
+      display: flex; align-items: center; gap: 12px; margin-top: 36px; flex-wrap: wrap; justify-content: center;
+    }
+    .flow-box {
+      padding: 16px 24px;
+      background: rgba(59,130,246,0.12);
+      border: 1px solid rgba(59,130,246,0.35);
+      border-radius: 12px;
+      font-weight: 600;
+    }
+    .flow-arrow { color: var(--muted); font-size: 1.5rem; }
+    .nav-hint {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      color: var(--muted);
+      display: flex; gap: 24px; align-items: center;
+    }
+    .progress {
+      position: fixed; top: 0; left: 0; height: 3px;
+      background: linear-gradient(90deg, var(--gold), var(--accent));
+      transition: width 0.3s ease;
+    }
+    .logo-mark {
+      font-size: 3rem;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 0 24px rgba(245,197,66,0.4));
+    }
+    ul.bullets {
+      text-align: left;
+      max-width: 640px;
+      margin-top: 28px;
+      list-style: none;
+    }
+    ul.bullets li {
+      padding: 10px 0 10px 28px;
+      position: relative;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    ul.bullets li::before {
+      content: "◆";
+      position: absolute;
+      left: 0;
+      color: var(--gold);
+      font-size: 0.6rem;
+      top: 16px;
+    }
+    .cta {
+      margin-top: 32px;
+      padding: 14px 32px;
+      background: linear-gradient(135deg, #ffe082, var(--gold));
+      color: #1a1408;
+      border: none;
+      border-radius: 30px;
+      font-weight: 800;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="progress" id="progress"></div>
+  <div class="deck" id="deck">
+
+    <section class="slide active" data-i="0">
+      <div class="logo-mark">🛡️</div>
+      <p class="tag">Lifeline AI</p>
+      <h1>Next-generation <em>national emergency</em> response infrastructure</h1>
+      <h2>Victim app · Offline rural resilience · Command center · AI danger zones</h2>
+    </section>
+
+    <section class="slide" data-i="1">
+      <p class="tag">Problem</p>
+      <h1>Help fails when <em>networks</em> fail</h1>
+      <div class="stat-row">
+        <div class="stat"><strong>45+ min</strong><span>rural response time</span></div>
+        <div class="stat"><strong>1.5B+</strong><span>low-connectivity citizens</span></div>
+        <div class="stat"><strong>0</strong><span>unified victim→dispatch OS</span></div>
+      </div>
+    </section>
+
+    <section class="slide" data-i="2">
+      <p class="tag">Solution</p>
+      <h1>One platform, <em>three layers</em></h1>
+      <div class="flow">
+        <div class="flow-box">📱 Citizen SOS</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box">☁️ Cloud + AI</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box">🖥️ Command Center</div>
+      </div>
+      <h2 style="margin-top:28px">Works in cities and rural dead zones — SMS, mesh, offline queue</h2>
+    </section>
+
+    <section class="slide" data-i="3">
+      <p class="tag">Live demo</p>
+      <h1>See it <em>now</em></h1>
+      <ul class="bullets">
+        <li>Mobile preview :3000 → <strong style="color:var(--gold)">Run Hackathon Demo</strong></li>
+        <li>Command dashboard :5173 → <strong style="color:var(--gold)">Launch live demo</strong></li>
+        <li>AI fall → SOS → WebSocket incident → dispatch → danger alert</li>
+      </ul>
+      <button class="cta" onclick="window.open('http://localhost:3000','_blank')">Open victim app</button>
+    </section>
+
+    <section class="slide" data-i="4">
+      <p class="tag">Innovation</p>
+      <h1>Technical <em>differentiators</em></h1>
+      <div class="grid">
+        <div class="card"><strong>Edge motion AI</strong><span>Fall, crash, panic — on-device, private</span></div>
+        <div class="card"><strong>Offline-first</strong><span>SMS, BLE mesh, idempotent sync</span></div>
+        <div class="card"><strong>Danger Zone Engine</strong><span>Heatmaps, route safety, predictive alerts</span></div>
+        <div class="card"><strong>Real-time ops</strong><span>WebSocket national incident fabric</span></div>
+      </div>
+    </section>
+
+    <section class="slide" data-i="5">
+      <p class="tag">Social impact</p>
+      <h1>Built for <em>equity</em></h1>
+      <div class="stat-row">
+        <div class="stat"><strong>−30%</strong><span>target dispatch time (pilot)</span></div>
+        <div class="stat"><strong>85%+</strong><span>SOS success in dead zones</span></div>
+        <div class="stat"><strong>SDG 3·11·16</strong><span>health, cities, institutions</span></div>
+      </div>
+    </section>
+
+    <section class="slide" data-i="6">
+      <p class="tag">Business</p>
+      <h1>B2G SaaS + <em>partnerships</em></h1>
+      <ul class="bullets">
+        <li>Government / EMS — per-seat command center + incident tiers</li>
+        <li>Telco & insurance — pre-installed SOS, family plans</li>
+        <li>Enterprise — campuses, mining, logistics private ops</li>
+      </ul>
+    </section>
+
+    <section class="slide" data-i="7">
+      <p class="tag">Scale</p>
+      <h1>City pilot → <em>nation</em></h1>
+      <div class="flow">
+        <div class="flow-box">Pilot corridor</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box">Regional shards</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box">National OS</div>
+      </div>
+      <h2>Stateless API · Firestore regions · Redis WS fan-out at scale</h2>
+    </section>
+
+    <section class="slide" data-i="8">
+      <p class="tag">Competition</p>
+      <h1>Not another <em>panic button</em></h1>
+      <h2>Full-stack infrastructure vs fragmented apps, CAD-only, or maps-only safety</h2>
+    </section>
+
+    <section class="slide" data-i="9">
+      <p class="tag">Ask</p>
+      <h1>Partner with us on a <em>90-day pilot</em></h1>
+      <h2>Prove faster dispatch. Save lives. Build national infrastructure together.</h2>
+      <p style="margin-top:24px;color:var(--gold);font-weight:700">lifeline.ai · Hackathon 2026</p>
+    </section>
+  </div>
+
+  <div class="nav-hint">
+    <span>← → or Space to navigate</span>
+    <span id="counter">1 / 10</span>
+  </div>
+
+  <script>
+    const slides = [...document.querySelectorAll(".slide")];
+    let i = 0;
+
+    function go(n) {
+      slides[i].classList.remove("active");
+      slides[i].classList.add("prev");
+      i = (n + slides.length) % slides.length;
+      slides.forEach((s, j) => {
+        s.classList.toggle("prev", j < i);
+        s.classList.toggle("active", j === i);
+      });
+      document.getElementById("progress").style.width = ((i + 1) / slides.length * 100) + "%";
+      document.getElementById("counter").textContent = (i + 1) + " / " + slides.length;
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); go(i + 1); }
+      if (e.key === "ArrowLeft") go(i - 1);
+    });
+    document.getElementById("progress").style.width = (1 / slides.length * 100) + "%";
+  </script>
+</body>
+</html>

@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lifeline AI</title>
+  <style>
+    :root {
+      --bg: #050508;
+      --gold: #f5c542;
+      --gold-dim: #c9a227;
+      --muted: #8e8e93;
+      --card: #141418;
+      --border: #2a2418;
+      --emergency: #e53935;
+      --text: #f5f5f7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .stars {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background: radial-gradient(ellipse 80% 50% at 50% 35%, rgba(245,197,66,0.18), transparent 60%), var(--bg);
+    }
+    .star {
+      position: absolute; width: 2px; height: 2px; background: #ffe082;
+      border-radius: 50%; opacity: 0.4; animation: twinkle 3s infinite;
+    }
+    @keyframes twinkle { 0%,100%{opacity:.2} 50%{opacity:.8} }
+    .phone {
+      position: relative; z-index: 1;
+      max-width: 420px; margin: 0 auto; min-height: 100vh;
+      display: flex; flex-direction: column;
+    }
+    .header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 12px 8px 20px;
+    }
+    .shield {
+      width: 44px; height: 44px; border-radius: 50%;
+      border: 1px solid rgba(245,197,66,0.4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+      box-shadow: 0 0 20px rgba(245,197,66,0.15);
+    }
+    .header-text { flex: 1; min-width: 0; }
+    .header h1 { color: var(--gold); font-size: 1.2rem; font-weight: 800; letter-spacing: 0.5px; }
+    .header p { color: var(--muted); font-size: 0.72rem; margin-top: 2px; }
+    .icon-btn {
+      background: none; border: none; font-size: 1.35rem;
+      cursor: pointer; padding: 8px; border-radius: 50%;
+      line-height: 1;
+    }
+    .icon-btn:hover { background: rgba(255,255,255,0.06); }
+    .banner, .offline-banner {
+      margin: 4px 20px; padding: 10px 14px; border-radius: 12px;
+      font-size: 0.78rem; display: none; align-items: center; gap: 10px;
+    }
+    .banner.show, .offline-banner.show { display: flex; }
+    .banner {
+      justify-content: center; font-weight: 800; letter-spacing: 1px;
+      background: linear-gradient(90deg, #b71c1c, var(--emergency));
+      box-shadow: 0 0 16px rgba(229,57,53,0.45);
+    }
+    .offline-banner {
+      background: rgba(93,64,55,0.9); border: 1px solid rgba(245,197,66,0.35);
+    }
+    .offline-banner.weak { background: rgba(69,90,100,0.9); }
+    .offline-banner span { flex: 1; line-height: 1.35; }
+    .sync-btn {
+      background: none; border: none; color: var(--gold);
+      font-weight: 600; cursor: pointer; font-size: 0.8rem;
+    }
+    .main {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 12px 20px 20px;
+    }
+    .sos-wrap { perspective: 600px; margin-bottom: 24px; }
+    .sos-btn {
+      width: 200px; height: 200px; border-radius: 50%; border: none;
+      background: radial-gradient(circle at 35% 30%, #ffe082, var(--gold) 55%, var(--gold-dim));
+      color: #1a1408; font-size: 3rem; font-weight: 900; letter-spacing: 2px;
+      cursor: pointer; transform: rotateX(8deg);
+      box-shadow: 0 0 50px rgba(245,197,66,0.55), 0 20px 40px rgba(0,0,0,0.5);
+      animation: sosPulse 1.8s ease-in-out infinite;
+      transition: background 0.3s, color 0.3s;
+    }
+    .sos-btn.busy { opacity: 0.7; pointer-events: none; }
+    .sos-btn.active {
+      background: radial-gradient(circle, #ff6b6b, var(--emergency));
+      color: #fff; animation: none;
+    }
+    @keyframes sosPulse {
+      0%,100% { box-shadow: 0 0 40px rgba(245,197,66,0.5), 0 20px 40px rgba(0,0,0,0.5); transform: rotateX(8deg) scale(1); }
+      50% { box-shadow: 0 0 70px rgba(245,197,66,0.75), 0 24px 50px rgba(0,0,0,0.55); transform: rotateX(8deg) scale(1.04); }
+    }
+    .quick { display: flex; gap: 16px; justify-content: center; width: 100%; max-width: 340px; }
+    .quick-item { text-align: center; cursor: pointer; flex: 1; }
+    .quick-circle {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: linear-gradient(145deg, #1a1a1f, #121216);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.35rem; margin: 0 auto 8px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+      transition: transform 0.15s;
+    }
+    .quick-item:active .quick-circle { transform: scale(0.95); }
+    .quick-circle.red {
+      background: linear-gradient(145deg, #ff6b6b, var(--emergency));
+      border-color: rgba(229,57,53,0.5);
+      box-shadow: 0 0 20px rgba(229,57,53,0.4);
+    }
+    .quick-item span { font-size: 0.7rem; color: var(--muted); font-weight: 600; }
+    .quick-item.red span { color: var(--emergency); }
+    .cards { padding: 0 20px 12px; }
+    .card {
+      background: linear-gradient(145deg, #141418, #101014);
+      border: 1px solid var(--border); border-radius: 20px;
+      padding: 16px 18px; margin-bottom: 12px;
+      display: flex; align-items: center; gap: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      cursor: pointer; transition: border-color 0.2s;
+    }
+    .card:hover { border-color: rgba(245,197,66,0.4); }
+    .card-icon {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: rgba(245,197,66,0.1); border: 1px solid rgba(245,197,66,0.3);
+      display: flex; align-items: center; justify-content: center; font-size: 1.25rem;
+    }
+    .card h3 { font-size: 1rem; margin-bottom: 2px; }
+    .card p { font-size: 0.78rem; color: var(--muted); }
+    .card .arrow { margin-left: auto; color: var(--gold); opacity: 0.7; font-size: 1.2rem; }
+    .nav {
+      margin: 0 16px 16px; padding: 10px 8px;
+      background: rgba(20,20,24,0.95); border: 1px solid var(--border);
+      border-radius: 28px; display: flex; justify-content: space-around;
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.3);
+    }
+    .nav button {
+      background: none; border: none; color: var(--muted);
+      font-size: 1.35rem; padding: 6px 14px; border-radius: 20px;
+      cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px;
+    }
+    .nav button.active { background: rgba(245,197,66,0.15); color: var(--gold); }
+    .nav button .lbl { font-size: 0.62rem; font-weight: 600; display: none; }
+    .nav button.active .lbl { display: block; }
+    .volume-hint {
+      text-align: center; font-size: 0.65rem; color: var(--muted);
+      padding: 0 20px 8px; opacity: 0.8;
+    }
+  </style>
+  <style>
+    /* Overlays & sub-screens */
+    .overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(0,0,0,0.92);
+      display: none; flex-direction: column;
+      max-width: 420px; margin: 0 auto; left: 0; right: 0;
+    }
+    .overlay.show { display: flex; }
+    .screen-bar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 16px 12px; border-bottom: 1px solid var(--border);
+    }
+    .screen-bar h2 { flex: 1; font-size: 1.05rem; color: var(--gold); }
+    .back-btn {
+      background: rgba(245,197,66,0.12); border: 1px solid var(--border);
+      color: var(--gold); border-radius: 12px; padding: 8px 14px;
+      cursor: pointer; font-size: 0.85rem;
+    }
+    .screen-body { flex: 1; overflow-y: auto; padding: 16px 20px 24px; }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 6px; }
+    .field input, .field select, .field textarea {
+      width: 100%; padding: 12px 14px; border-radius: 12px;
+      border: 1px solid var(--border); background: var(--card);
+      color: var(--text); font-size: 0.95rem;
+    }
+    .field textarea { min-height: 72px; resize: vertical; }
+    .btn {
+      width: 100%; padding: 14px; border: none; border-radius: 14px;
+      font-weight: 700; font-size: 1rem; cursor: pointer; margin-top: 8px;
+    }
+    .btn-gold { background: linear-gradient(145deg, #ffe082, var(--gold)); color: #1a1408; }
+    .btn-red { background: linear-gradient(145deg, #ff6b6b, var(--emergency)); color: #fff; }
+    .btn-outline {
+      background: transparent; border: 1px solid var(--border); color: var(--text);
+    }
+    .list-item {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .list-item .ico { font-size: 1.4rem; }
+    .list-item .meta { flex: 1; }
+    .list-item .meta h4 { font-size: 0.95rem; margin-bottom: 2px; }
+    .list-item .meta p { font-size: 0.75rem; color: var(--muted); }
+    .switch-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 0; border-bottom: 1px solid var(--border);
+    }
+    .switch-row:last-child { border-bottom: none; }
+    .switch-row small { display: block; color: var(--muted); font-size: 0.72rem; margin-top: 2px; }
+    .switch {
+      width: 48px; height: 26px; border-radius: 13px;
+      background: #333; position: relative; cursor: pointer; flex-shrink: 0;
+    }
+    .switch.on { background: var(--gold-dim); }
+    .switch::after {
+      content: ""; position: absolute; top: 3px; left: 3px;
+      width: 20px; height: 20px; border-radius: 50%; background: #fff;
+      transition: transform 0.2s;
+    }
+    .switch.on::after { transform: translateX(22px); }
+    .countdown-ring {
+      width: 140px; height: 140px; border-radius: 50%;
+      border: 4px solid var(--emergency);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.5rem; font-weight: 800; color: var(--emergency);
+      margin: 20px auto; box-shadow: 0 0 30px rgba(229,57,53,0.4);
+    }
+    .type-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+    .chip {
+      padding: 8px 14px; border-radius: 20px; border: 1px solid var(--border);
+      background: var(--card); cursor: pointer; font-size: 0.8rem;
+    }
+    .chip.active { border-color: var(--gold); background: rgba(245,197,66,0.15); color: var(--gold); }
+    .map-box {
+      height: 180px; border-radius: 16px; border: 1px solid var(--border);
+      background: linear-gradient(145deg, #1a2a1a, #0d140d);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 8px; color: var(--muted); font-size: 0.85rem;
+      margin: 12px 0;
+    }
+    .map-box .pin { font-size: 2rem; }
+    .calc-display {
+      flex: 1; display: flex; align-items: flex-end; justify-content: flex-end;
+      padding: 24px; font-size: 3rem; font-weight: 300;
+      word-break: break-all;
+    }
+    .calc-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px;
+    }
+    .calc-key {
+      padding: 18px; border: none; border-radius: 12px;
+      background: #2c2c2e; color: #fff; font-size: 1.2rem; cursor: pointer;
+    }
+    .calc-key.op { background: #ff9f0a; color: #000; }
+    .calc-key.wide { grid-column: span 2; }
+    .toast {
+      position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+      background: #2a2a2e; color: #fff; padding: 12px 20px;
+      border-radius: 12px; font-size: 0.85rem; z-index: 200;
+      max-width: 360px; text-align: center;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      border: 1px solid var(--border);
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .toast.show { opacity: 1; }
+    .toast.emergency { background: var(--emergency); border-color: #b71c1c; }
+    .section-title {
+      font-size: 0.8rem; font-weight: 700; color: var(--gold);
+      text-transform: uppercase; letter-spacing: 1px;
+      margin: 20px 0 10px;
+    }
+    .empty { text-align: center; color: var(--muted); padding: 40px 20px; }
+    .resolve-bar { margin-top: 16px; }
+    .safety-banner {
+      margin: 4px 20px; padding: 10px 14px; border-radius: 12px;
+      background: rgba(74,20,140,0.85); border: 1px solid rgba(255,152,0,0.4);
+      font-size: 0.78rem; display: none;
+    }
+    .safety-banner.show { display: block; }
+    .safety-banner strong { color: #ffb74d; }
+    .hackathon-bar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      padding: 10px 16px;
+      background: linear-gradient(90deg, rgba(26,20,8,0.97), rgba(40,28,8,0.97));
+      border-bottom: 1px solid rgba(245,197,66,0.35);
+      backdrop-filter: blur(8px);
+    }
+    .hackathon-bar span { font-size: 0.78rem; color: var(--muted); }
+    .hackathon-bar strong { color: var(--gold); font-size: 0.82rem; }
+    .btn-demo-run {
+      padding: 8px 16px; border: none; border-radius: 20px; cursor: pointer;
+      background: linear-gradient(135deg, #ffe082, var(--gold));
+      color: #1a1408; font-weight: 800; font-size: 0.78rem;
+      box-shadow: 0 0 20px rgba(245,197,66,0.4);
+    }
+    .phone { padding-top: 52px; }
+    .card { transition: transform 0.2s ease, box-shadow 0.2s; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
+    .ai-overlay {
+      position: fixed; inset: 0; z-index: 250; background: rgba(0,0,0,0.85);
+      display: none; align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px; padding: 24px;
+    }
+    .ai-overlay.show { display: flex; }
+    .ai-overlay .ring {
+      width: 100px; height: 100px; border-radius: 50%;
+      border: 3px solid var(--emergency);
+      animation: aiRing 1.2s ease-in-out infinite;
+    }
+    @keyframes aiRing {
+      0%,100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.15); opacity: 0.6; }
+    }
+    .ai-overlay h3 { color: var(--emergency); }
+    .ai-overlay p { color: var(--muted); font-size: 0.85rem; text-align: center; max-width: 280px; }
+  </style>
+</head>
+<body>
+  <div class="hackathon-bar">
+    <strong>🎬 Hackathon Demo</strong>
+    <span>National emergency infrastructure</span>
+    <button type="button" class="btn-demo-run" onclick="App.runHackathonDemo()">▶ Run full simulation</button>
+  </div>
+  <div class="ai-overlay" id="aiOverlay">
+    <div class="ring"></div>
+    <h3>AI motion detected</h3>
+    <p>Fall pattern verified — opening emergency flow in 2s…</p>
+  </div>
+  <div class="stars" id="stars"></div>
+  <div class="toast" id="toast"></div>
+
+  <!-- HOME -->
+  <div class="phone" id="viewHome">
+    <div class="header">
+      <div class="shield">🛡️</div>
+      <div class="header-text">
+        <h1>Lifeline AI</h1>
+        <p>Volume 3× → Emergency help flow</p>
+      </div>
+      <button class="icon-btn" title="Calculator disguise" onclick="App.openCalculator()">🧮</button>
+      <button class="icon-btn" title="Sign out" onclick="App.signOut()">⎋</button>
+    </div>
+    <div id="offlineBanner" class="offline-banner">
+      <span id="offlineText">📡 Offline</span>
+      <button class="sync-btn" id="syncBtn" onclick="App.syncQueue()" style="display:none">Sync</button>
+    </div>
+    <div id="safetyBanner" class="safety-banner">
+      <strong>⚠ Risk zone ahead</strong> — AI danger score 78/100. Tap demo to simulate predictive alert.
+    </div>
+    <div id="emergencyBanner" class="banner">⚠ EMERGENCY ALERT ACTIVE</div>
+    <div class="main">
+      <div class="sos-wrap">
+        <button class="sos-btn" id="sosBtn" onclick="App.requestSos('manual')">SOS</button>
+      </div>
+      <div class="quick">
+        <div class="quick-item red" onclick="App.call999()">
+          <div class="quick-circle red">📞</div>
+          <span>Call 999</span>
+        </div>
+        <div class="quick-item" onclick="App.shareLive()">
+          <div class="quick-circle">📍</div>
+          <span>Share Live</span>
+        </div>
+        <div class="quick-item" onclick="App.openCalculator()">
+          <div class="quick-circle">📱</div>
+          <span>Fake Call</span>
+        </div>
+      </div>
+    </div>
+    <p class="volume-hint">Demo: press <kbd>V</kbd> three times quickly to simulate volume-button SOS</p>
+    <div class="cards">
+      <div class="card" onclick="App.openProfile()">
+        <div class="card-icon">👥</div>
+        <div>
+          <h3>Trusted Contacts</h3>
+          <p id="contactLabel">Add your trusted contacts</p>
+        </div>
+        <span class="arrow">›</span>
+      </div>
+      <div class="card" onclick="App.openSafeZones()">
+        <div class="card-icon">🗺️</div>
+        <div>
+          <h3>Safe Zones</h3>
+          <p id="zoneLabel">Configure protection areas</p>
+        </div>
+        <span class="arrow">›</span>
+      </div>
+    </div>
+    <nav class="nav" id="bottomNav">
+      <button class="active" data-nav="0" onclick="App.nav(0)">🏠<span class="lbl">Home</span></button>
+      <button data-nav="1" onclick="App.nav(1)">📋<span class="lbl">History</span></button>
+      <button data-nav="2" onclick="App.nav(2)">👤<span class="lbl">Profile</span></button>
+      <button data-nav="3" onclick="App.nav(3)">⚙️<span class="lbl">Settings</span></button>
+    </nav>
+  </div>
+
+  <!-- EMERGENCY HELP (countdown) -->
+  <div class="overlay" id="screenEmergency">
+    <div class="screen-bar">
+      <button class="back-btn" onclick="App.cancelEmergency()">Cancel</button>
+      <h2>Emergency Help</h2>
+    </div>
+    <div class="screen-body" style="text-align:center">
+      <p style="color:var(--muted);font-size:0.85rem">Alerts will send automatically</p>
+      <div class="countdown-ring" id="countdownDisplay">00:15</div>
+      <div class="map-box" id="locBox">
+        <span class="pin">📍</span>
+        <span id="locText">Getting location…</span>
+      </div>
+      <p class="section-title" style="text-align:left">Emergency type</p>
+      <div class="type-chips" id="typeChips"></div>
+      <p style="font-size:0.8rem;color:var(--muted);margin-top:12px" id="contactPreview"></p>
+      <button class="btn btn-red" onclick="App.sendHelpNow()">Send alerts now</button>
+    </div>
+  </div>
+
+  <!-- LIVE TRACKING -->
+  <div class="overlay" id="screenTracking">
+    <div class="screen-bar">
+      <button class="back-btn" onclick="App.closeOverlay('screenTracking')">Back</button>
+      <h2>Live tracking</h2>
+    </div>
+    <div class="screen-body">
+      <div class="map-box" style="height:220px">
+        <span class="pin">🗺️</span>
+        <span id="trackCoords">Sharing location…</span>
+      </div>
+      <div class="list-item">
+        <span class="ico">🆔</span>
+        <div class="meta"><h4>Event ID</h4><p id="trackEventId">—</p></div>
+      </div>
+      <div class="list-item">
+        <span class="ico">👥</span>
+        <div class="meta"><h4>Contacts notified</h4><p id="trackContacts">—</p></div>
+      </div>
+      <div class="list-item">
+        <span class="ico">📡</span>
+        <div class="meta"><h4>Delivery</h4><p id="trackDelivery">Cloud + SMS + mesh queue</p></div>
+      </div>
+      <div class="resolve-bar">
+        <button class="btn btn-outline" onclick="App.resolveEmergency()">I'm safe — resolve emergency</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="overlay" id="screenHistory">
+    <div class="screen-bar">
+      <button class="back-btn" onclick="App.closeOverlay('screenHistory')">Back</button>
+      <h2>Emergency history</h2>
+    </div>
+    <div class="screen-body" id="historyList"></div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="overlay" id="screenProfile">
+    <div class="screen-bar">
+      <button class="back-btn" onclick="App.closeOverlay('screenProfile')">Back</button>
+      <h2>Profile & contacts</h2>
+    </div>
+    <div class="screen-body">
+      <p class="section-title">Your profile</p>
+      <div class="field"><label>Full name</label><input id="profName" placeholder="Your name" /></div>
+      <div class="field"><label>Phone</label><input id="profPhone" placeholder="+44…" /></div>
+      <div class="field"><label>Blood group</label><input id="profBlood" placeholder="O+" /></div>
+      <div class="field"><label>Medical notes</label><textarea id="profMedical" placeholder="Allergies, conditions…"></textarea></div>
+      <button class="btn btn-gold" onclick="App.saveProfile()">Save profile</button>
+      <p class="section-title">Add trusted contact</p>
+      <div class="field"><label>Name</label><input id="ctName" placeholder="Contact name" /></div>
+      <div class="field"><label>Phone (for SMS fallback)</label><input id="ctPhone" placeholder="+44…" /></div>
+      <div class="field"><label>Relationship</label><input id="ctRelation" placeholder="Family, friend…" /></div>
+      <div class="field"><label>Email (for push alerts)</label><input id="ctEmail" type="email" placeholder="email@example.com" /></div>
+      <button class="btn btn-outline" onclick="App.addContact()">Add contact</button>
+      <p class="section-title">Trusted contacts</p>
+      <div id="contactsList"></div>
+    </div>
+  </div>
+
+  <!-- SAFE ZONES -->
+  <div class="overlay" id="screenZones">
+    <div class="screen-bar">
+      <button class="back-btn" onclick="App.closeOverlay('screenZones')">Back</button>
+      <h2>Safe zones</h2>
+    </div>
+    <div class="screen-body">
+      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:16px">Get alerts when you leave these areas.</p>
+      <div class="field"><label>Zone name</label><input id="zoneName" placeholder="Home, School…" /></div>
+      <div class="field"><label>Radius (meters)</label><input id="zoneRadius" type="number" value="200" min="50" max="5000" /></div>
+      <button class="btn btn-gold" onclick="App.addZone()">Add safe zone</button>
+      <p class="section-title">Your zones</p>
+      <div id="zonesList"></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="overlay" id="screenSettings">
+    <div class="screen-bar">
+      <button class="back-btn" onclick="App.closeOverlay('screenSettings')">Back</button>
+      <h2>Emergency settings</h2>
+    </div>
+    <div class="screen-body" id="settingsBody"></div>
+  </div>
+
+  <!-- CALCULATOR DISGUISE -->
+  <div class="overlay" id="screenCalculator" style="background:#1c1c1e">
+    <div class="screen-bar" style="border:none">
+      <button class="back-btn" onclick="App.closeOverlay('screenCalculator')">←</button>
+      <h2 style="color:#fff">Calculator</h2>
+    </div>
+    <div class="calc-display" id="calcDisplay">0</div>
+    <div class="calc-grid" id="calcGrid"></div>
+  </div>
+
+  <script>
+    const STORAGE = {
+      profile: "ll_profile",
+      contacts: "ll_contacts",
+      zones: "ll_zones",
+      history: "ll_history",
+      settings: "ll_settings",
+      queue: "ll_queue",
+      session: "ll_session",
+    };
+
+    const EMERGENCY_TYPES = [
+      { id: "medical", label: "Medical", icon: "🏥" },
+      { id: "crime", label: "Crime / threat", icon: "🚨" },
+      { id: "fire", label: "Fire", icon: "🔥" },
+      { id: "accident", label: "Accident", icon: "🚗" },
+      { id: "other", label: "Other", icon: "⚠️" },
+    ];
+
+    const DEFAULT_SETTINGS = {
+      countdownSeconds: 15,
+      silentMode: false,
+      shakeEnabled: true,
+      volumeButtonEnabled: true,
+      voiceEnabled: false,
+      recordAudio: false,
+      aiDetection: true,
+      offlineFirst: true,
+      smsFallback: true,
+      meshRelay: true,
+      weakNet: true,
+      calculatorSecret: "911",
+    };
+
+    const App = {
+      state: {
+        active: false,
+        busy: false,
+        eventId: null,
+        countdownTimer: null,
+        secondsLeft: 15,
+        selectedType: "medical",
+        location: null,
+        trackTimer: null,
+        volumePresses: [],
+        navIndex: 0,
+      },
+
+      init() {
+        this.seedStars();
+        this.loadSettings();
+        this.renderTypeChips();
+        this.buildCalculator();
+        this.refreshUI();
+        this.setupConnectivity();
+        this.setupVolumeDemo();
+        window.addEventListener("online", () => this.updateOfflineBanner());
+        window.addEventListener("offline", () => this.updateOfflineBanner());
+      },
+
+      seedStars() {
+        const el = document.getElementById("stars");
+        for (let i = 0; i < 70; i++) {
+          const s = document.createElement("div");
+          s.className = "star";
+          s.style.left = Math.random() * 100 + "%";
+          s.style.top = Math.random() * 100 + "%";
+          s.style.animationDelay = Math.random() * 3 + "s";
+          el.appendChild(s);
+        }
+      },
+
+      load(key, fallback) {
+        try {
+          const v = localStorage.getItem(key);
+          return v ? JSON.parse(v) : fallback;
+        } catch { return fallback; }
+      },
+      save(key, val) {
+        localStorage.setItem(key, JSON.stringify(val));
+      },
+
+      loadSettings() {
+        this.settings = { ...DEFAULT_SETTINGS, ...this.load(STORAGE.settings, {}) };
+      },
+      persistSettings() {
+        this.save(STORAGE.settings, this.settings);
+      },
+
+      toast(msg, emergency = false) {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.className = "toast show" + (emergency ? " emergency" : "");
+        clearTimeout(t._tm);
+        t._tm = setTimeout(() => t.classList.remove("show"), 3200);
+      },
+
+      setupConnectivity() {
+        this.updateOfflineBanner();
+      },
+
+      updateOfflineBanner() {
+        const banner = document.getElementById("offlineBanner");
+        const text = document.getElementById("offlineText");
+        const syncBtn = document.getElementById("syncBtn");
+        const queue = this.load(STORAGE.queue, []);
+        const pending = queue.filter((q) => q.status !== "synced").length;
+
+        if (navigator.onLine && pending === 0) {
+          banner.classList.remove("show", "weak");
+          return;
+        }
+
+        banner.classList.add("show");
+        if (!navigator.onLine) {
+          banner.classList.remove("weak");
+          text.textContent = pending
+            ? `📡 Offline — ${pending} SOS queued (SMS/mesh simulated)`
+            : "📡 Offline — SMS & mesh relay ready";
+        } else {
+          banner.classList.add("weak");
+          text.textContent = pending
+            ? `📶 Weak signal — syncing ${pending} queued alert(s)…`
+            : "📶 Connected — compact sync mode";
+        }
+        syncBtn.style.display = pending > 0 ? "block" : "none";
+      },
+
+      setupVolumeDemo() {
+        document.addEventListener("keydown", (e) => {
+          if (e.key.toLowerCase() !== "v") return;
+          const now = Date.now();
+          this.state.volumePresses = this.state.volumePresses.filter((t) => now - t < 2000);
+          this.state.volumePresses.push(now);
+          if (this.state.volumePresses.length >= 3) {
+            this.state.volumePresses = [];
+            this.toast("Volume 3× detected — opening emergency flow", true);
+            this.requestSos("volume");
+          }
+        });
+      },
+
+      refreshUI() {
+        const contacts = this.load(STORAGE.contacts, []);
+        const zones = this.load(STORAGE.zones, []);
+        const label = document.getElementById("contactLabel");
+        label.textContent = contacts.length === 0
+          ? "Add your trusted contacts"
+          : `${contacts.length} contact${contacts.length === 1 ? "" : "s"} added`;
+        document.getElementById("zoneLabel").textContent =
+          zones.length === 0 ? "Configure protection areas" : `${zones.length} zone${zones.length === 1 ? "" : "s"} configured`;
+
+        const btn = document.getElementById("sosBtn");
+        btn.classList.toggle("active", this.state.active);
+        btn.classList.toggle("busy", this.state.busy);
+        document.getElementById("emergencyBanner").classList.toggle("show", this.state.active);
+        this.updateOfflineBanner();
+      },
+
+      async getLocation() {
+        return new Promise((resolve) => {
+          if (!navigator.geolocation) {
+            resolve({ lat: 51.5074, lng: -0.1278, label: "London, UK (demo)" });
+            return;
+          }
+          navigator.geolocation.getCurrentPosition(
+            (p) => resolve({
+              lat: p.coords.latitude,
+              lng: p.coords.longitude,
+              label: `${p.coords.latitude.toFixed(5)}, ${p.coords.longitude.toFixed(5)}`,
+            }),
+            () => resolve({ lat: 51.5074, lng: -0.1278, label: "Location unavailable (demo)" }),
+            { enableHighAccuracy: true, timeout: 8000 }
+          );
+        });
+      },
+
+      requestSos(source) {
+        if (this.state.busy || this.state.active) {
+          if (this.state.active) this.openTracking();
+          return;
+        }
+        const cd = this.settings.countdownSeconds || 15;
+        this.state.secondsLeft = cd;
+        this.state.selectedType = "medical";
+        document.getElementById("countdownDisplay").textContent = this.formatTime(cd);
+        document.getElementById("screenEmergency").classList.add("show");
+        document.getElementById("locText").textContent = "Getting location…";
+
+        const contacts = this.load(STORAGE.contacts, []);
+        document.getElementById("contactPreview").textContent =
+          contacts.length
+            ? `Will notify: ${contacts.map((c) => c.name).join(", ")}`
+            : "No contacts — add them in Profile";
+
+        this.getLocation().then((loc) => {
+          this.state.location = loc;
+          document.getElementById("locText").textContent = loc.label;
+        });
+
+        clearInterval(this.state.countdownTimer);
+        this.state.countdownTimer = setInterval(() => {
+          this.state.secondsLeft--;
+          document.getElementById("countdownDisplay").textContent =
+            this.formatTime(this.state.secondsLeft);
+          if (this.state.secondsLeft <= 0) this.sendHelpNow(source);
+        }, 1000);
+      },
+
+      formatTime(s) {
+        const m = String(Math.floor(s / 60)).padStart(2, "0");
+        const sec = String(s % 60).padStart(2, "0");
+        return `${m}:${sec}`;
+      },
+
+      cancelEmergency() {
+        clearInterval(this.state.countdownTimer);
+        document.getElementById("screenEmergency").classList.remove("show");
+      },
+
+      renderTypeChips() {
+        const wrap = document.getElementById("typeChips");
+        wrap.innerHTML = EMERGENCY_TYPES.map(
+          (t) => `<button class="chip${t.id === this.state.selectedType ? " active" : ""}"
+            data-type="${t.id}" onclick="App.pickType('${t.id}')">${t.icon} ${t.label}</button>`
+        ).join("");
+      },
+
+      pickType(id) {
+        this.state.selectedType = id;
+        this.renderTypeChips();
+      },
+
+      async sendHelpNow(source = "manual") {
+        if (this.state.busy) return;
+        this.state.busy = true;
+        clearInterval(this.state.countdownTimer);
+        document.getElementById("screenEmergency").classList.remove("show");
+
+        const loc = this.state.location || await this.getLocation();
+        const eventId = "evt_" + Date.now();
+        const contacts = this.load(STORAGE.contacts, []);
+
+        const record = {
+          eventId,
+          status: "active",
+          triggerType: source,
+          emergencyType: this.state.selectedType,
+          latitude: loc.lat,
+          longitude: loc.lng,
+          triggeredAt: new Date().toISOString(),
+          silent: this.settings.silentMode,
+        };
+
+        const history = this.load(STORAGE.history, []);
+        history.unshift(record);
+        this.save(STORAGE.history, history);
+
+        const queue = this.load(STORAGE.queue, []);
+        queue.push({
+          localId: eventId,
+          status: navigator.onLine ? "synced" : "pending",
+          payload: record,
+          smsSent: !navigator.onLine && this.settings.smsFallback,
+          meshRelayed: !navigator.onLine && this.settings.meshRelay,
+          createdAt: new Date().toISOString(),
+        });
+        this.save(STORAGE.queue, queue);
+
+        this.state.eventId = eventId;
+        this.state.active = true;
+        this.state.busy = false;
+
+        if (!navigator.onLine) {
+          if (this.settings.smsFallback && contacts.length) {
+            const body = encodeURIComponent(
+              `LIFELINE SOS. Type: ${this.state.selectedType}. ` +
+              `Location: https://maps.google.com/?q=${loc.lat},${loc.lng} ` +
+              `Coords: ${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}`
+            );
+            const phone = contacts.find((c) => c.phone)?.phone || contacts[0].phone;
+            if (phone) window.open(`sms:${phone}?body=${body}`, "_blank");
+            this.toast("SMS fallback opened with GPS coordinates", true);
+          }
+          if (this.settings.meshRelay) {
+            this.toast("BLE mesh relay simulated to nearby devices", true);
+          }
+          this.toast("Queued for cloud sync when online", true);
+        } else {
+          this.toast("Emergency activated — contacts notified", true);
+          this.tryBackendTrigger(record);
+        }
+
+        this.refreshUI();
+        this.openTracking();
+      },
+
+      async tryBackendTrigger(record) {
+        try {
+          const res = await fetch("http://localhost:8080/health");
+          if (!res.ok) return;
+          // Full API needs Firebase token; demo marks synced locally
+        } catch (_) {}
+      },
+
+      openTracking() {
+        if (!this.state.active) return;
+        const loc = this.state.location || { lat: 0, lng: 0, label: "—" };
+        document.getElementById("trackEventId").textContent = this.state.eventId || "—";
+        document.getElementById("trackCoords").textContent = loc.label;
+        const contacts = this.load(STORAGE.contacts, []);
+        document.getElementById("trackContacts").textContent =
+          contacts.length ? contacts.map((c) => c.name).join(", ") : "None configured";
+        const q = this.load(STORAGE.queue, []).find((x) => x.localId === this.state.eventId);
+        let delivery = "Cloud push to contacts";
+        if (q?.smsSent) delivery += " + SMS fallback";
+        if (q?.meshRelayed) delivery += " + mesh relay";
+        document.getElementById("trackDelivery").textContent = delivery;
+        document.getElementById("screenTracking").classList.add("show");
+
+        clearInterval(this.state.trackTimer);
+        this.state.trackTimer = setInterval(async () => {
+          const p = await this.getLocation();
+          this.state.location = p;
+          document.getElementById("trackCoords").textContent = p.label + " (live)";
+        }, 5000);
+      },
+
+      resolveEmergency() {
+        const history = this.load(STORAGE.history, []);
+        const idx = history.findIndex((h) => h.eventId === this.state.eventId);
+        if (idx >= 0) {
+          history[idx].status = "resolved";
+          history[idx].resolvedAt = new Date().toISOString();
+          this.save(STORAGE.history, history);
+        }
+        clearInterval(this.state.trackTimer);
+        this.state.active = false;
+        this.state.eventId = null;
+        this.closeOverlay("screenTracking");
+        this.refreshUI();
+        this.toast("Emergency resolved. Stay safe.");
+      },
+
+      call999() {
+        this.toast("Dialing emergency services: 999", true);
+        window.location.href = "tel:999";
+      },
+
+      shareLive() {
+        if (this.state.active) this.openTracking();
+        else this.requestSos("manual");
+      },
+
+      syncQueue() {
+        const queue = this.load(STORAGE.queue, []);
+        let n = 0;
+        queue.forEach((q) => {
+          if (q.status !== "synced") {
+            q.status = "synced";
+            n++;
+          }
+        });
+        this.save(STORAGE.queue, queue);
+        this.updateOfflineBanner();
+        this.toast(n ? `Synced ${n} queued alert(s) to cloud` : "Nothing to sync");
+      },
+
+      nav(index) {
+        document.querySelectorAll("#bottomNav button").forEach((b, i) => {
+          b.classList.toggle("active", i === 0);
+        });
+        switch (index) {
+          case 1: this.openHistory(); break;
+          case 2: this.openProfile(); break;
+          case 3: this.openSettings(); break;
+        }
+      },
+
+      openOverlay(id) {
+        document.getElementById(id).classList.add("show");
+      },
+      closeOverlay(id) {
+        document.getElementById(id).classList.remove("show");
+        if (id === "screenProfile") this.refreshUI();
+      },
+
+      openHistory() {
+        const items = this.load(STORAGE.history, []);
+        const el = document.getElementById("historyList");
+        if (!items.length) {
+          el.innerHTML = '<p class="empty">No emergencies recorded yet.</p>';
+        } else {
+          el.innerHTML = items.map((h) => {
+            const d = new Date(h.triggeredAt).toLocaleString();
+            const icon = h.status === "active" ? "⚠️" : "✅";
+            const color = h.status === "active" ? "var(--emergency)" : "#4caf50";
+            return `<div class="list-item">
+              <span class="ico">${icon}</span>
+              <div class="meta">
+                <h4 style="color:${color}">${h.status.toUpperCase()} — ${h.emergencyType || "SOS"}</h4>
+                <p>${d} · ${h.triggerType || "manual"}</p>
+                <p>📍 ${(h.latitude || 0).toFixed(4)}, ${(h.longitude || 0).toFixed(4)}</p>
+              </div>
+            </div>`;
+          }).join("");
+        }
+        this.openOverlay("screenHistory");
+      },
+
+      openProfile() {
+        const p = this.load(STORAGE.profile, {});
+        document.getElementById("profName").value = p.name || "";
+        document.getElementById("profPhone").value = p.phone || "";
+        document.getElementById("profBlood").value = p.blood || "";
+        document.getElementById("profMedical").value = p.medical || "";
+        this.renderContactsList();
+        this.openOverlay("screenProfile");
+      },
+
+      saveProfile() {
+        this.save(STORAGE.profile, {
+          name: document.getElementById("profName").value.trim(),
+          phone: document.getElementById("profPhone").value.trim(),
+          blood: document.getElementById("profBlood").value.trim(),
+          medical: document.getElementById("profMedical").value.trim(),
+        });
+        this.toast("Profile saved");
+      },
+
+      addContact() {
+        const name = document.getElementById("ctName").value.trim();
+        const phone = document.getElementById("ctPhone").value.trim();
+        if (!name) { this.toast("Enter contact name"); return; }
+        const contacts = this.load(STORAGE.contacts, []);
+        contacts.push({
+          id: "c_" + Date.now(),
+          name,
+          phone,
+          relation: document.getElementById("ctRelation").value.trim(),
+          email: document.getElementById("ctEmail").value.trim(),
+        });
+        this.save(STORAGE.contacts, contacts);
+        ["ctName", "ctPhone", "ctRelation", "ctEmail"].forEach((id) => {
+          document.getElementById(id).value = "";
+        });
+        this.renderContactsList();
+        this.refreshUI();
+        this.toast(`Added ${name}`);
+      },
+
+      removeContact(id) {
+        const contacts = this.load(STORAGE.contacts, []).filter((c) => c.id !== id);
+        this.save(STORAGE.contacts, contacts);
+        this.renderContactsList();
+        this.refreshUI();
+      },
+
+      renderContactsList() {
+        const contacts = this.load(STORAGE.contacts, []);
+        const el = document.getElementById("contactsList");
+        if (!contacts.length) {
+          el.innerHTML = '<p class="empty">No contacts yet</p>';
+          return;
+        }
+        el.innerHTML = contacts.map((c) => `
+          <div class="list-item">
+            <span class="ico">👤</span>
+            <div class="meta">
+              <h4>${c.name}</h4>
+              <p>${c.relation || "Contact"} · ${c.phone || "no phone"}</p>
+            </div>
+            <button class="back-btn" style="padding:6px 10px;font-size:0.75rem" onclick="App.removeContact('${c.id}')">✕</button>
+          </div>`).join("");
+      },
+
+      openSafeZones() {
+        this.renderZonesList();
+        this.openOverlay("screenZones");
+      },
+
+      addZone() {
+        const name = document.getElementById("zoneName").value.trim();
+        const radius = parseInt(document.getElementById("zoneRadius").value, 10) || 200;
+        if (!name) { this.toast("Enter zone name"); return; }
+        const zones = this.load(STORAGE.zones, []);
+        zones.push({ id: "z_" + Date.now(), name, radius });
+        this.save(STORAGE.zones, zones);
+        document.getElementById("zoneName").value = "";
+        this.renderZonesList();
+        this.refreshUI();
+        this.toast(`Safe zone "${name}" added`);
+      },
+
+      removeZone(id) {
+        const zones = this.load(STORAGE.zones, []).filter((z) => z.id !== id);
+        this.save(STORAGE.zones, zones);
+        this.renderZonesList();
+        this.refreshUI();
+      },
+
+      renderZonesList() {
+        const zones = this.load(STORAGE.zones, []);
+        const el = document.getElementById("zonesList");
+        if (!zones.length) {
+          el.innerHTML = '<p class="empty">No safe zones yet</p>';
+          return;
+        }
+        el.innerHTML = zones.map((z) => `
+          <div class="list-item">
+            <span class="ico">📍</span>
+            <div class="meta"><h4>${z.name}</h4><p>${z.radius}m radius</p></div>
+            <button class="back-btn" style="padding:6px 10px;font-size:0.75rem" onclick="App.removeZone('${z.id}')">✕</button>
+          </div>`).join("");
+      },
+
+      openSettings() {
+        const s = this.settings;
+        const toggles = [
+          ["silentMode", "Silent SOS mode", "No UI alerts; hidden notify"],
+          ["shakeEnabled", "Shake to trigger", ""],
+          ["volumeButtonEnabled", "Volume button (3×)", "Emergency help flow"],
+          ["voiceEnabled", "Voice activation", ""],
+          ["recordAudio", "Record audio on trigger", ""],
+          ["aiDetection", "AI motion detection", "Fall, crash, panic (demo)"],
+          ["offlineFirst", "Offline-first SOS", "Queue locally, sync when online"],
+          ["smsFallback", "SMS fallback with GPS", "When internet fails"],
+          ["meshRelay", "Bluetooth mesh relay", "Nearby device relay"],
+          ["weakNet", "Weak internet optimization", "Defer heavy uploads"],
+        ];
+        document.getElementById("settingsBody").innerHTML = `
+          <div class="field">
+            <label>Countdown (seconds)</label>
+            <input type="number" id="setCountdown" min="5" max="30" value="${s.countdownSeconds}" />
+          </div>
+          <div class="field">
+            <label>Calculator secret code</label>
+            <input id="setSecret" value="${s.calculatorSecret}" placeholder="911" />
+          </div>
+          <p class="section-title">Triggers & offline</p>
+          ${toggles.map(([key, title, sub]) => `
+            <div class="switch-row">
+              <div><strong style="font-size:0.9rem">${title}</strong>
+                ${sub ? `<small>${sub}</small>` : ""}</div>
+              <div class="switch ${s[key] ? "on" : ""}" data-key="${key}" onclick="App.toggleSetting('${key}')"></div>
+            </div>`).join("")}
+          <button class="btn btn-gold" style="margin-top:20px" onclick="App.saveSettings()">Save settings</button>
+        `;
+        this.openOverlay("screenSettings");
+      },
+
+      toggleSetting(key) {
+        this.settings[key] = !this.settings[key];
+        const sw = document.querySelector(`.switch[data-key="${key}"]`);
+        if (sw) sw.classList.toggle("on", this.settings[key]);
+      },
+
+      saveSettings() {
+        this.settings.countdownSeconds = parseInt(document.getElementById("setCountdown").value, 10) || 15;
+        this.settings.calculatorSecret = document.getElementById("setSecret").value || "911";
+        this.persistSettings();
+        this.toast("Emergency settings saved");
+        this.closeOverlay("screenSettings");
+      },
+
+      openCalculator() {
+        this.calcExpr = "";
+        this.calcDisplay = "0";
+        document.getElementById("calcDisplay").textContent = "0";
+        this.openOverlay("screenCalculator");
+      },
+
+      buildCalculator() {
+        const keys = ["7","8","9","/","4","5","6","*","1","2","3","-","C","0","=","+"];
+        const grid = document.getElementById("calcGrid");
+        grid.innerHTML = keys.map((k) => {
+          const cls = "calc-key" + (["/","*","-","+","="].includes(k) ? " op" : "");
+          return `<button class="${cls}" onclick="App.calcTap('${k}')">${k}</button>`;
+        }).join("");
+      },
+
+      calcTap(k) {
+        if (k === "C") {
+          this.calcExpr = "";
+          this.calcDisplay = "0";
+        } else if (k === "=") {
+          this.calcExpr += "=";
+          this.calcDisplay = "OK";
+        } else {
+          this.calcExpr = (this.calcExpr === "0" ? "" : this.calcExpr) + k;
+          this.calcDisplay = this.calcExpr;
+        }
+        document.getElementById("calcDisplay").textContent = this.calcDisplay;
+        const secret = this.settings.calculatorSecret || "911";
+        if (this.calcExpr.endsWith(secret)) {
+          this.calcExpr = "";
+          this.calcDisplay = "0";
+          document.getElementById("calcDisplay").textContent = "0";
+          this.closeOverlay("screenCalculator");
+          this.toast("Secret code — hidden SOS triggered", true);
+          this.requestSos("calculator");
+        }
+      },
+
+      async runHackathonDemo() {
+        if (this.state.busy) return;
+        this.toast("Hackathon simulation starting…", true);
+        const overlay = document.getElementById("aiOverlay");
+        overlay.classList.add("show");
+        document.getElementById("safetyBanner")?.classList.add("show");
+
+        fetch("http://localhost:8080/api/demo/hackathon-run", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Dashboard-Key": "lifeline-dashboard-dev",
+          },
+          body: JSON.stringify({ scenario: "ruralSos" }),
+        }).catch(() => {});
+
+        await new Promise((r) => setTimeout(r, 2200));
+        overlay.classList.remove("show");
+        this.settings.countdownSeconds = 5;
+        this.requestSos("fallDetection");
+      },
+
+      signOut() {
+        if (confirm("Sign out of Lifeline AI demo?")) {
+          localStorage.removeItem(STORAGE.session);
+          this.state.active = false;
+          this.state.eventId = null;
+          this.refreshUI();
+          this.toast("Signed out (demo)");
+        }
+      },
+    };
+
+    App.init();
+  </script>
+</body>
+</html>
